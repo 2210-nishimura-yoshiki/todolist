@@ -1,6 +1,7 @@
 package com.example.ToDoList.controller;
 
 import com.example.ToDoList.controller.form.TaskForm;
+import com.example.ToDoList.mapper.TaskMapper;
 import com.example.ToDoList.service.TaskService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -24,7 +25,8 @@ public class TaskController {
     TaskService taskService;
     @Autowired
     HttpSession session;
-
+    @Autowired
+    TaskMapper mapper;
     /*
      * タスク内容表示処理
      */
@@ -34,6 +36,7 @@ public class TaskController {
                             @RequestParam(name = "strStartDate", required = false) String strStartDate,
                             @RequestParam(name = "strEndDate", required = false) String strEndDate) {
 
+//        List<Task> task = mapper.getTask();
         ModelAndView mav = new ModelAndView();
         List<TaskForm> sortDate = null;
         try {
