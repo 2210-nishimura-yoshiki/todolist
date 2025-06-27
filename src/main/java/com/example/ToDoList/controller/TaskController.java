@@ -1,8 +1,6 @@
 package com.example.ToDoList.controller;
 
 import com.example.ToDoList.controller.form.TaskForm;
-import com.example.ToDoList.mapper.TaskMapper;
-import com.example.ToDoList.repository.entity.Task;
 import com.example.ToDoList.service.TaskService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -26,8 +24,7 @@ public class TaskController {
     TaskService taskService;
     @Autowired
     HttpSession session;
-    @Autowired
-    TaskMapper mapper;
+
     /*
      * タスク内容表示処理
      */
@@ -37,7 +34,6 @@ public class TaskController {
                             @RequestParam(name = "strStartDate", required = false) String strStartDate,
                             @RequestParam(name = "strEndDate", required = false) String strEndDate) {
 
-        List<Task> task = mapper.getTask();
         ModelAndView mav = new ModelAndView();
         List<TaskForm> sortDate = null;
         try {
@@ -101,10 +97,10 @@ public class TaskController {
                 errorList.add("タスクは140文字以内で入力してください");
             }
         }
-        if (StringUtils.hasText(taskForm.getLimitDate()) && !checkDate(taskForm.getLimitDate())) {
+        if (StringUtils.hasText(taskForm.getLimitDate()) && checkDate(taskForm.getLimitDate())) {
             errorList.add("無効な日付です");
         }
-        if (errorList.size() != 0) {
+        if (!errorList.isEmpty()) {
             ModelAndView mav = new ModelAndView();
             // 画面遷移先を指定
             mav.setViewName("/new");
@@ -126,10 +122,7 @@ public class TaskController {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         Date cdDate = sdf.parse(date);
         String strToday = sdf.format(today);
-        if (!strToday.equals(date) && cdDate.before(today)) {
-            return false;
-        }
-        return true;
+        return !strToday.equals(date) && cdDate.before(today);
     }
 
     /*
@@ -184,10 +177,10 @@ public class TaskController {
                 errorList.add("タスクは140文字以内で入力してください");
             }
         }
-        if (StringUtils.hasText(task.getLimitDate()) && !checkDate(task.getLimitDate())) {
+        if (StringUtils.hasText(task.getLimitDate()) && checkDate(task.getLimitDate())) {
             errorList.add("無効な日付です");
         }
-        if (errorList.size() != 0) {
+        if (!errorList.isEmpty()) {
             ModelAndView mav = new ModelAndView();
             // 画面遷移先を指定
             mav.setViewName("/edit");
@@ -214,7 +207,7 @@ public class TaskController {
         TaskForm task = taskService.editTask(id);
         task.setStatus(statusValue);
         // 投稿をテーブルに格納
-        taskService.saveStatus(task);
+        taskService.updateStatus(task);
         // rootへリダイレクト
         return new ModelAndView("redirect:/");
     }

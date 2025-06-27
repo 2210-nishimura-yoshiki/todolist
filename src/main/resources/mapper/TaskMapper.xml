@@ -1,8 +1,113 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.example.ToDoList.mapper.TaskMapper">
-    <select id="getTask" resultType="com.example.ToDoList.repository.entity.Task">
-        SELECT *
+
+
+    <!-- JPA: findById -->
+    <select id="findById" resultType="com.example.ToDoList.repository.entity.Task">
+        SELECT
+            *
         FROM tasks
+        WHERE id = #{id}
+    </select>
+
+    <!--
+      JPA: save (新規登録用)
+      - useGeneratedKeys="true": DBで自動採番されたIDを取得する設定
+      - keyProperty="id": 取得したIDを、引数のtaskオブジェクトのidプロパティにセットする設定
+    -->
+    <insert id="insert" parameterType="com.example.ToDoList.repository.entity.Task" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO tasks (
+            content,
+            status,
+            limit_date,
+            created_date,
+            updated_date
+        ) VALUES (
+            #{content},
+            #{status},
+            #{limitDate},
+            NOW(),
+            NOW()
+        )
+    </insert>
+
+    <!-- JPA: save (更新用) -->
+    <update id="update" parameterType="com.example.ToDoList.repository.entity.Task">
+        UPDATE
+            tasks
+        SET
+            content = #{content},
+            status = #{status},
+            limit_date = #{limitDate},
+            updated_date = NOW()
+        WHERE
+            id = #{id}
+    </update>
+
+    <!-- JPA: deleteById -->
+    <delete id="deleteById">
+        DELETE FROM tasks
+        WHERE id = #{id}
+    </delete>
+
+    <!--
+      JPA: findByLimitDateBetweenOrderByLimitDate
+      resultTypeを指定することで、結果がTaskオブジェクトのリストにマッピングされます。
+      （application.propertiesの 'map-underscore-to-camel-case=true' 設定が前提です）
+    -->
+    <select id="findByLimitDateBetween" resultType="com.example.ToDoList.repository.entity.Task">
+        SELECT
+            *
+        FROM
+            tasks
+        WHERE
+            limit_date BETWEEN #{start} AND #{end}
+        ORDER BY
+            limit_date ASC
+    </select>
+
+    <!-- JPA: findByStatusAndLimitDateBetweenOrderByLimitDate -->
+    <select id="findByStatusAndLimitDateBetween" resultType="com.example.ToDoList.repository.entity.Task">
+        SELECT
+            *
+        FROM
+            tasks
+        WHERE
+            status = #{status}
+            AND limit_date BETWEEN #{start} AND #{end}
+        ORDER BY
+            limit_date ASC
+    </select>
+
+    <!--
+      JPA: findByContentContainingAndLimitDateBetweenOrderByLimitDate
+      PostgreSQLでは、文字列の連結に '||' を使用します。
+    -->
+    <select id="findByContentContainingAndLimitDateBetween" resultType="com.example.ToDoList.repository.entity.Task">
+        SELECT
+            *
+        FROM
+            tasks
+        WHERE
+            content LIKE '%' || #{keyword} || '%'
+            AND limit_date BETWEEN #{start} AND #{end}
+        ORDER BY
+            limit_date ASC
+    </select>
+
+    <!-- JPA: findByStatusAndContentContainingAndLimitDateBetweenOrderByLimitDate -->
+    <select id="findByStatusAndContentContainingAndLimitDateBetween"
+            resultType="com.example.ToDoList.repository.entity.Task">
+        SELECT
+            *
+        FROM
+            tasks
+        WHERE
+            status = #{status}
+            AND content LIKE '%' || #{keyword} || '%'
+            AND limit_date BETWEEN #{start} AND #{end}
+        ORDER BY
+            limit_date ASC
     </select>
 </mapper>

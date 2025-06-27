@@ -1,7 +1,7 @@
 package com.example.ToDoList.service;
 
 import com.example.ToDoList.controller.form.TaskForm;
-import com.example.ToDoList.repository.TaskRepository;
+import com.example.ToDoList.mapper.TaskMapper;
 import com.example.ToDoList.repository.entity.Task;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -16,16 +16,7 @@ import java.util.List;
 @Service
 public class TaskService {
     @Autowired
-    TaskRepository taskRepository;
-
-//    /*
-//     * レコード全件取得処理
-//     */
-//    public List<TaskForm> findAllReport() {
-//        List<Task> results = taskRepository.findAllByOrderById();
-//        List<TaskForm> tasks = setReportForm(results);
-//        return tasks;
-//    }
+    TaskMapper mapper;
 
     /*
      * レコード絞り込み取得処理
@@ -55,18 +46,17 @@ public class TaskService {
         List<Task> results = null;
         if (StringUtils.hasText(strStatus) && StringUtils.hasText(keyword)) {
             status = Short.parseShort(strStatus);
-            results = taskRepository.findByStatusAndContentContainingAndLimitDateBetweenOrderByLimitDate(status, keyword, start, end);
+            results = mapper.findByStatusAndContentContainingAndLimitDateBetween(status, keyword, start, end);
         } else if (StringUtils.hasText(strStatus) && (!StringUtils.hasText(keyword))) {
             status = Short.parseShort(strStatus);
-            results = taskRepository.findByStatusAndLimitDateBetweenOrderByLimitDate(status, start, end);
+            results = mapper.findByStatusAndLimitDateBetween(status, start, end);
         } else if (StringUtils.hasText(keyword) && (!StringUtils.hasText(strStatus))) {
-            results = taskRepository.findByContentContainingAndLimitDateBetweenOrderByLimitDate(keyword, start, end);
+            results = mapper.findByContentContainingAndLimitDateBetween(keyword, start, end);
         } else {
-            results = taskRepository.findByLimitDateBetweenOrderByLimitDate(start, end);
+            results = mapper.findByLimitDateBetween(start, end);
         }
 
-        List<TaskForm> tasks = setTaskForm(results);
-        return tasks;
+        return setTaskForm(results);
     }
 
     /*
@@ -75,15 +65,14 @@ public class TaskService {
     private List<TaskForm> setTaskForm(List<Task> results) {
         List<TaskForm> tasks = new ArrayList<>();
 
-        for (int i = 0; i < results.size(); i++) {
+        for (Task value : results) {
             TaskForm task = new TaskForm();
-            Task result = results.get(i);
-            task.setId(result.getId());
-            task.setContent(result.getContent());
-            task.setStatus(result.getStatus());
+            task.setId(value.getId());
+            task.setContent(value.getContent());
+            task.setStatus(value.getStatus());
 
             String strLimitDate = null;
-            Date limitDate = result.getLimitDate();
+            Date limitDate = value.getLimitDate();
             SimpleDateFormat sdFormat = new SimpleDateFormat("yyyy-MM-dd");
 
             strLimitDate = sdFormat.format(limitDate);
@@ -99,35 +88,42 @@ public class TaskService {
      */
     public void saveTask(TaskForm reqTask) throws ParseException {
         Task saveTask = setTaskEntity(reqTask);
-        taskRepository.save(saveTask);
+        if (saveTask.getId() == 0) {
+            mapper.insert(saveTask);
+        } else {
+            mapper.update(saveTask);
+        }
     }
 
     /*
      * ステータス変更
      */
-    public boolean saveStatus(TaskForm reqTask){
+    public void updateStatus(TaskForm reqTask) {
         Task saveTask = setTaskEntity(reqTask);
-        taskRepository.save(saveTask);
-        return true;
+        mapper.update(saveTask);
     }
 
     /*
      * レコード削除
      */
     public void deleteTask(Integer id) {
-        taskRepository.deleteById(id);
+        mapper.deleteById(id);
     }
 
     /*
      * レコード1件取得
      */
     public TaskForm editTask(Integer id) {
-        List<Task> results = new ArrayList<>();
-        results.add((Task) taskRepository.findById(id).orElse(null));
-        if (results.get(0) == null) {
+        Task task = mapper.findById(id);
+        if (task == null) {
             return null;
         }
+        List<Task> results = new ArrayList<>();
+        results.add(task);
+
         List<TaskForm> reports = setTaskForm(results);
+
+        // 変換後のリストから最初の（そして唯一の）要素を返す
         return reports.get(0);
     }
 
